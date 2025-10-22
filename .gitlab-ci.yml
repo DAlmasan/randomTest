@@ -1,0 +1,211 @@
+spec:
+  inputs:
+    ENABLE_FEATURE_X:
+      type: boolean
+      description: Input used for testing purposes
+      default: true
+---
+
+# Project B: .gitlab-ci.yml
+include:
+  - project: root/gitlab-webhook-test-automated-tests       # namespace/project of A
+    file: .gitlab-ci.yml                                    # path in A’s repo
+    ref: main                                               # branch or tag in A
+
+image: maven:3.9-eclipse-temurin-21
+stages:
+  - build
+  - build-2
+  - test
+  - deploy
+  - cleanup
+  - merge_request_stage
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository
+
+before_script:
+  - echo "Using Maven version:"
+  - mvn -v
+
+
+merge-request-job-for-testing:
+  stage: merge_request_stage
+  script:
+    - echo "This job will run only when a merge request pipeline is triggered."
+    - echo "This rule is used to configure this job to run in merge request pipelines"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+build-job-1:
+  stage: build
+  script:
+    - echo "start build"
+    - echo - $RunPipeline
+    - echo "starting to run maven..."
+    - mvn clean compile
+    - |
+      if $[[ inputs.ENABLE_FEATURE_X ]]; then
+        echo "Feature X is enabled!"
+      else
+        echo "Feature X is disabled."
+      fi
+
+build-job-2:
+  stage: build
+  script:
+    - echo "start build"
+    - echo - $RunPipeline
+    - echo "starting to run maven..."
+    - mvn clean compile
+    - |
+      if $[[ inputs.ENABLE_FEATURE_X ]]; then
+        echo "Feature X is enabled!"
+      else
+        echo "Feature X is disabled."
+      fi
+  extends: build-job
+
+build-job-3:
+  stage: build
+  script:
+    - echo "start build"
+    - echo - $RunPipeline
+    - echo "starting to run maven..."
+    - mvn clean compile
+    - |
+      if $[[ inputs.ENABLE_FEATURE_X ]]; then
+        echo "Feature X is enabled!"
+      else
+        echo "Feature X is disabled."
+      fi
+  extends: build-job
+
+build-job-4:
+  stage: build
+  script:
+    - echo "start build"
+    - echo - $RunPipeline
+    - echo "starting to run maven..."
+    - mvn clean compile
+    - |
+      if $[[ inputs.ENABLE_FEATURE_X ]]; then
+        echo "Feature X is enabled!"
+      else
+        echo "Feature X is disabled."
+      fi
+
+build-job-5:
+  stage: build
+  script:
+    - echo "start build"
+    - echo - $RunPipeline
+    - echo "starting to run maven..."
+    - mvn clean compile
+    - |
+      if $[[ inputs.ENABLE_FEATURE_X ]]; then
+        echo "Feature X is enabled!"
+      else
+        echo "Feature X is disabled."
+      fi
+  extends: build-job
+
+build-job-6:
+  stage: build-2
+  script:
+    - echo "start build"
+    - echo - $RunPipeline
+    - echo "starting to run maven..."
+    - mvn clean compile
+    - |
+      if $[[ inputs.ENABLE_FEATURE_X ]]; then
+        echo "Feature X is enabled!"
+      else
+        echo "Feature X is disabled."
+      fi
+  extends: build-job
+
+
+test-job-student-test:
+  stage: test
+  script:
+    - pwd
+    - |
+      if [ -f "surefire-reports/junit-reports/junit.xml" ]; then
+       echo "File exists"
+      else
+       echo "File does not exist"
+      fi
+   
+    - mvn clean install -Dtest=$testsToRun -fn
+    - pwd
+
+  artifacts:
+      when: always  # Upload artifacts even if the job fails
+      paths:
+        - ./target/surefire-reports/*.xml  # Adjust this to your actual test result directory
+
+
+run-tests-1:
+  stage: test
+  script:
+    - pwd
+    - |
+      if [ -f "surefire-reports/junit-reports/junit.xml" ]; then
+       echo "File exists"
+      else
+       echo "File does not exist"
+      fi
+   
+    - mvn clean install -Dtest=$testsToRun -fn
+  needs:
+    - job: build-job-5
+  extends: test-job-student-test
+  artifacts:
+      when: always  # Upload artifacts even if the job fails
+      paths:
+        - ./target/surefire-reports/*.xml  # Adjust this to your actual test result directory
+     
+# test-job-verifier:
+#   stage: test
+#   script:
+#     - mvn clean install -Dtest=Verifier -fn
+
+#   artifacts:
+#       when: always  # Upload artifacts even if the job fails
+#       paths:
+#         - ./target/surefire-reports/*.xml  # Adjust this to your actual test result directory
+#     #  reports:
+#     #    junit: ./target/surefire-reports/junit-reports/junit.xml  # JUnit test result file
+
+# testsToRun:
+#   stage: test
+#   script:
+#     - mvn clean install -Dtest=Verifier -fn
+
+#   artifacts:
+#       when: always  # Upload artifacts even if the job fails
+#       paths:
+#         - ./target/surefire-reports/*.xml  # Adjust this to your actual test result directory
+#     #  reports:
+#     #    junit: ./target/surefire-reports/junit-reports/junit.xml  # JUnit test result file
+
+deploy-job-1:
+  stage: deploy
+  script:
+    - echo "Deploying the application..."
+    - echo "Using Maven version:"
+    - mvn -v
+    - echo "Deploying the application finished."
+
+cleanup-job-1:
+  stage: cleanup
+  script:
+    - echo "Cleaning up after deployment..."
+    - echo "Using Maven version:"
+    - mvn -v
+    - echo "Cleaning up after deployment finished."
